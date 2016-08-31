@@ -1,28 +1,97 @@
 package com.noopurjain.sleepmonitor;
 
 import android.app.Activity;
+import android.content.DialogInterface;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.media.MediaRecorder;
 import android.os.Bundle;
+import android.os.Environment;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
 import android.widget.Button;
 
-public class MainActivity extends Activity implements SensorEventListener{
+import java.io.IOException;
 
-    Button btnStart, btnStop;
-    MediaRecorder audio = new MediaRecorder();
-    audio.setAudioSource(MediaRecorder.AudioSource.MIC);
+public class MainActivity extends Activity implements SensorEventListener, View.OnClickListener{
+
+
+    private Button btnStart, btnStop;
+
+    MediaRecorder audioRecorder = null;
+    private static String audioFileName = null;
+    private static final String LOG_TAG = "AudioRecording";
+
+    private void onRecord(boolean start){
+        if (start) {
+            startRecording();
+        }
+        else {
+            stopRecording();
+        }
+    }
+
+    private void setAudioFileName(){
+        audioFileName = Environment.getExternalStorageDirectory().getAbsolutePath();
+        audioFileName += "/audiorecordtest.3gp";
+    }
+
+    private void startRecording() {
+        audioRecorder = new MediaRecorder();
+        audioRecorder.setAudioSource(MediaRecorder.AudioSource.MIC);
+        audioRecorder.setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP);
+        audioRecorder.setOutputFile(audioFileName);
+        audioRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AMR_NB);
+
+        try {
+            audioRecorder.prepare();
+        } catch(IOException e) {
+            Log.e(LOG_TAG, "prepare() FAILED");
+        }
+
+        audioRecorder.start();
+    }
+
+    private void stopRecording() {
+        audioRecorder.stop();
+        audioRecorder.release();
+        audioRecorder = null;
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        setAudioFileName();
 
         btnStart = (Button) findViewById(R.id.sleep_start);
         btnStop = (Button) findViewById(R.id.sleep_stop);
+
+        btnStart.setOnClickListener(this);
+        btnStop.setOnClickListener(this);
+        btnStart.setEnabled(true);
+        btnStop.setEnabled(false);
+    }
+
+    @Override
+    public void onClick(View v){
+        switch(v.getId()) {
+            case R.id.sleep_start:
+                btnStart.setEnabled(false);
+                btnStop.setEnabled(true);
+                onRecord(true);
+                break;
+            case R.id.sleep_stop:
+                btnStart.setEnabled(true);
+                btnStop.setEnabled(false);
+                onRecord(false);
+                break;
+            default:
+                break;
+        }
     }
 
     @Override
