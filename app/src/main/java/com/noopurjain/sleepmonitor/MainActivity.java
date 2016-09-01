@@ -13,6 +13,8 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 
+import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 
@@ -64,6 +66,24 @@ public class MainActivity extends Activity implements SensorEventListener, View.
         audioRecorder = null;
     }
 
+    private void saveData() {
+        File root = new File( Environment.getExternalStorageDirectory().getAbsolutePath());
+        File file = new File(root, "AccelData.txt");
+        int i = 0;
+
+        try {
+            FileWriter writer = new FileWriter(file);
+            while(sensorData.get(i) != null) {
+                writer.append(sensorData.get(i).toString());
+                i++;
+            }
+            writer.flush();
+            writer.close();
+        } catch(IOException e){
+
+        }
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -103,6 +123,7 @@ public class MainActivity extends Activity implements SensorEventListener, View.
 
                 started = false;
                 sensorManager.unregisterListener(this);
+                saveData();
 
                 onRecord(false);
                 break;
