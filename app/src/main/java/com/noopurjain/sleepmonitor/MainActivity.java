@@ -1,25 +1,28 @@
 package com.noopurjain.sleepmonitor;
 
 import android.app.Activity;
-import android.content.DialogInterface;
+import android.content.Context;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
+import android.hardware.SensorManager;
 import android.media.MediaRecorder;
 import android.os.Bundle;
 import android.os.Environment;
 import android.util.Log;
-import android.view.Menu;
-import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 
 import java.io.IOException;
+import java.util.ArrayList;
 
 public class MainActivity extends Activity implements SensorEventListener, View.OnClickListener{
 
 
     private Button btnStart, btnStop;
+    private SensorManager sensorManager;
+    private ArrayList<AccelData> sensorData;
+    private boolean started = false;
 
     MediaRecorder audioRecorder = null;
     private static String audioFileName = null;
@@ -66,6 +69,8 @@ public class MainActivity extends Activity implements SensorEventListener, View.
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         setAudioFileName();
+        sensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
+        sensorData = new ArrayList<AccelData>();
 
         btnStart = (Button) findViewById(R.id.sleep_start);
         btnStop = (Button) findViewById(R.id.sleep_stop);
@@ -82,11 +87,23 @@ public class MainActivity extends Activity implements SensorEventListener, View.
             case R.id.sleep_start:
                 btnStart.setEnabled(false);
                 btnStop.setEnabled(true);
+
+                // Accelerometer data
+                sensorData = new ArrayList();
+                started = true;
+                Sensor accel = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
+                sensorManager.registerListener(this, accel, SensorManager.SENSOR_DELAY_FASTEST);
+
+                // Audio recording
                 onRecord(true);
                 break;
             case R.id.sleep_stop:
                 btnStart.setEnabled(true);
                 btnStop.setEnabled(false);
+
+                started = false;
+                sensorManager.unregisterListener(this);
+
                 onRecord(false);
                 break;
             default:
@@ -95,31 +112,7 @@ public class MainActivity extends Activity implements SensorEventListener, View.
     }
 
     @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.menu_main, menu);
-        return true;
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
-
-        //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
-            return true;
-        }
-
-        return super.onOptionsItemSelected(item);
-    }
-
-    @Override
-    public void onPause(){
-        super.onPause();
-    }
+    public void onPause(){ super.onPause(); }
 
     @Override
     public void onResume(){
@@ -128,7 +121,14 @@ public class MainActivity extends Activity implements SensorEventListener, View.
 
     @Override
     public void onSensorChanged(SensorEvent event){
-
+        if(started) {
+            double x = event.values[0];
+            double y = event.values[1];
+            double z = event.values[2];
+            long timestamp = System.currentTimeMillis();
+            AccelData data = new AccelData(timestamp, x, y, z);
+            sensorData.add(data);
+        }
     }
 
     @Override
