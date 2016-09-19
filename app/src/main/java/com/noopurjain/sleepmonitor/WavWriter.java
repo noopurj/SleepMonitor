@@ -35,7 +35,7 @@ public class WavWriter {
     private File outPath;
     private OutputStream out;
     private byte[] header = new byte[44];
-    final String relativeDir = "/SleepMonitorAudio";
+    final String relativeDir = "/SleepMonitor/Audio";
 
     private int channels = 1;
     private byte RECORDER_BPP = 16;  // bits per sample
@@ -117,7 +117,7 @@ public class WavWriter {
         }
         File path = new File(Environment.getExternalStorageDirectory().getPath() + relativeDir);
         path.mkdirs();
-        DateFormat df = new SimpleDateFormat("yyyy-MM-dd_HH'h'mm'm'ss.SSS's'", Locale.US);
+        DateFormat df = new SimpleDateFormat("yyyy-MM-dd_HH'h'mm'm'ss.SSS's'");
         String nowStr = df.format(new Date());
         outPath = new File(path, "rec" + nowStr + ".wav");
 

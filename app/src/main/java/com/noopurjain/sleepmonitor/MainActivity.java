@@ -13,9 +13,13 @@ import android.view.View;
 import android.widget.Button;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 
 public class MainActivity extends Activity implements SensorEventListener, View.OnClickListener{
 
@@ -24,11 +28,9 @@ public class MainActivity extends Activity implements SensorEventListener, View.
     private SensorManager sensorManager;
     private ArrayList<AccelData> sensorData;
     private boolean started = false;
-    private AudioRecorderThread samplingThread;
+    private final String relativeDirectory = "/SleepMonitor/Accel";
 
-    //MediaRecorder audioRecorder = null;
-    //private static String audioFileName = null;
-    //private RecordingThread recordingThread;
+    private AudioRecorderThread samplingThread;
 
     private static final String LOG_TAG = "MainActivity";
 
@@ -70,22 +72,25 @@ public class MainActivity extends Activity implements SensorEventListener, View.
 
     // Accelerometer data
     private void saveData() {
-        File root = new File( Environment.getExternalStorageDirectory().getAbsolutePath());
-        File file = new File(root, "AccelData.txt");
+        File path = new File(Environment.getExternalStorageDirectory().getPath() + relativeDirectory);
+        path.mkdirs();
+        DateFormat df = new SimpleDateFormat("yyyy-MM-dd_HH'h'mm'm'ss.SSS's'");
+        String nowStr = df.format(new Date());
+        File outPath = new File(path, "accel" + nowStr + ".txt");
         int i = 0;
 
         try {
-            FileWriter writer = new FileWriter(file);
+            FileWriter writer = new FileWriter(outPath);
             writer.append("t, x, y, z\n");
             while(i < sensorData.size()) {
                 writer.append(sensorData.get(i).getTimestamp() + ", " + sensorData.get(i).getX() + ", "
-                + sensorData.get(i).getY() + ", " + sensorData.get(i).getZ() + "\n");
+                        + sensorData.get(i).getY() + ", " + sensorData.get(i).getZ() + "\n");
                 i++;
             }
             writer.flush();
             writer.close();
-        } catch(IOException e){
-            Log.e(LOG_TAG, "saveData() FAILED");
+        } catch (IOException e) {
+            Log.w(LOG_TAG, "start(): Error writing " + outPath, e);
         }
     }
 
