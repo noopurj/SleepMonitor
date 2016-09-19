@@ -13,7 +13,6 @@ import android.view.View;
 import android.widget.Button;
 
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.text.DateFormat;
@@ -33,42 +32,6 @@ public class MainActivity extends Activity implements SensorEventListener, View.
     private AudioRecorderThread samplingThread;
 
     private static final String LOG_TAG = "MainActivity";
-
-    /*private void onRecord(boolean start){
-        if (start) {
-            startRecording();
-        }
-        else {
-            stopRecording();
-        }
-    }
-
-    private void setAudioFileName(){
-        audioFileName = Environment.getExternalStorageDirectory().getAbsolutePath();
-        audioFileName += "/audiorecordtest.3gp";
-    }
-
-    private void startRecording() {
-        audioRecorder = new MediaRecorder();
-        audioRecorder.setAudioSource(MediaRecorder.AudioSource.MIC);
-        audioRecorder.setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP);
-        audioRecorder.setOutputFile(audioFileName);
-        audioRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AMR_NB);
-
-        try {
-            audioRecorder.prepare();
-        } catch(IOException e) {
-            Log.e(LOG_TAG, "prepare() FAILED");
-        }
-
-        audioRecorder.start();
-    }
-
-    private void stopRecording() {
-        audioRecorder.stop();
-        audioRecorder.release();
-        audioRecorder = null;
-    }*/
 
     // Accelerometer data
     private void saveData() {
@@ -99,14 +62,7 @@ public class MainActivity extends Activity implements SensorEventListener, View.
         Log.i(LOG_TAG, "Activity Created");
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        //setAudioFileName();
 
-        /*recordingThread = new RecordingThread(new AudioReceivedListener() {
-            @Override
-            public void onAudioDataReceived(short[] data) {
-
-            }
-        });*/
         sensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
         sensorData = new ArrayList<AccelData>();
 
@@ -134,12 +90,7 @@ public class MainActivity extends Activity implements SensorEventListener, View.
                 Sensor accel = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
                 sensorManager.registerListener(this, accel, SensorManager.SENSOR_DELAY_NORMAL);
 
-                // Audio recording
-                //onRecord(true);
-                /*if(!recordingThread.recording()) {
-                    recordingThread.startRecording();
-                }*/
-                Log.i(LOG_TAG, "Starting looper thread");
+                // Audio
                 samplingThread.start();
                 break;
             case R.id.sleep_stop:
@@ -151,9 +102,6 @@ public class MainActivity extends Activity implements SensorEventListener, View.
                 saveData();
 
                 samplingThread.finish();
-
-                //recordingThread.stopRecording();
-                //onRecord(false);
                 break;
             default:
                 break;
