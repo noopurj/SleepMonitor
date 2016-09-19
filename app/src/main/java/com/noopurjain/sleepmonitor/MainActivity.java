@@ -6,7 +6,6 @@ import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
-import android.media.MediaRecorder;
 import android.os.Bundle;
 import android.os.Environment;
 import android.util.Log;
@@ -25,12 +24,15 @@ public class MainActivity extends Activity implements SensorEventListener, View.
     private SensorManager sensorManager;
     private ArrayList<AccelData> sensorData;
     private boolean started = false;
+    private AudioRecorderThread samplingThread;
 
-    MediaRecorder audioRecorder = null;
-    private static String audioFileName = null;
-    private static final String LOG_TAG = "AudioRecording";
+    //MediaRecorder audioRecorder = null;
+    //private static String audioFileName = null;
+    //private RecordingThread recordingThread;
 
-    private void onRecord(boolean start){
+    private static final String LOG_TAG = "MainActivity";
+
+    /*private void onRecord(boolean start){
         if (start) {
             startRecording();
         }
@@ -64,8 +66,9 @@ public class MainActivity extends Activity implements SensorEventListener, View.
         audioRecorder.stop();
         audioRecorder.release();
         audioRecorder = null;
-    }
+    }*/
 
+    // Accelerometer data
     private void saveData() {
         File root = new File( Environment.getExternalStorageDirectory().getAbsolutePath());
         File file = new File(root, "AccelData.txt");
@@ -73,22 +76,32 @@ public class MainActivity extends Activity implements SensorEventListener, View.
 
         try {
             FileWriter writer = new FileWriter(file);
-            while(sensorData.get(i) != null) {
-                writer.append(sensorData.get(i).toString());
+            writer.append("t, x, y, z\n");
+            while(i < sensorData.size()) {
+                writer.append(sensorData.get(i).getTimestamp() + ", " + sensorData.get(i).getX() + ", "
+                + sensorData.get(i).getY() + ", " + sensorData.get(i).getZ() + "\n");
                 i++;
             }
             writer.flush();
             writer.close();
         } catch(IOException e){
-
+            Log.e(LOG_TAG, "saveData() FAILED");
         }
     }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        Log.i(LOG_TAG, "Activity Created");
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        setAudioFileName();
+        //setAudioFileName();
+
+        /*recordingThread = new RecordingThread(new AudioReceivedListener() {
+            @Override
+            public void onAudioDataReceived(short[] data) {
+
+            }
+        });*/
         sensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
         sensorData = new ArrayList<AccelData>();
 
@@ -99,6 +112,8 @@ public class MainActivity extends Activity implements SensorEventListener, View.
         btnStop.setOnClickListener(this);
         btnStart.setEnabled(true);
         btnStop.setEnabled(false);
+
+        samplingThread = new AudioRecorderThread();
     }
 
     @Override
@@ -112,10 +127,15 @@ public class MainActivity extends Activity implements SensorEventListener, View.
                 sensorData = new ArrayList();
                 started = true;
                 Sensor accel = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
-                sensorManager.registerListener(this, accel, SensorManager.SENSOR_DELAY_FASTEST);
+                sensorManager.registerListener(this, accel, SensorManager.SENSOR_DELAY_NORMAL);
 
                 // Audio recording
-                onRecord(true);
+                //onRecord(true);
+                /*if(!recordingThread.recording()) {
+                    recordingThread.startRecording();
+                }*/
+                Log.i(LOG_TAG, "Starting looper thread");
+                samplingThread.start();
                 break;
             case R.id.sleep_stop:
                 btnStart.setEnabled(true);
@@ -125,7 +145,10 @@ public class MainActivity extends Activity implements SensorEventListener, View.
                 sensorManager.unregisterListener(this);
                 saveData();
 
-                onRecord(false);
+                samplingThread.finish();
+
+                //recordingThread.stopRecording();
+                //onRecord(false);
                 break;
             default:
                 break;
