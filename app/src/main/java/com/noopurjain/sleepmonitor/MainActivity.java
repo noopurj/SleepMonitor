@@ -87,7 +87,7 @@ public class MainActivity extends Activity implements SensorEventListener, View.
                 // Accelerometer data
                 sensorData = new ArrayList();
                 started = true;
-                Sensor accel = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
+                Sensor accel = sensorManager.getDefaultSensor(Sensor.TYPE_LINEAR_ACCELERATION);
                 sensorManager.registerListener(this, accel, SensorManager.SENSOR_DELAY_NORMAL);
 
                 // Audio
